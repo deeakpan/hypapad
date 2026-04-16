@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --canvas: #0c0d0f;
+  --fg: #ffffff;
+  --team: #c5c9d0;
+  --muted: #a1a1aa;
+  --border: #27272a;
+  --sidebar: #111113;
+  --surface: #141416;
+  --surface-elevated: #18181b;
+  --surface-hover: #1f1f23;
+  --accent: #3d8b6e;
+  --accent-muted: #2d6a54;
+}
+
+@theme inline {
+  --color-canvas: var(--canvas);
+  --color-fg: var(--fg);
+  --color-team: var(--team);
+  --color-muted: var(--muted);
+  --color-border: var(--border);
+  --color-sidebar: var(--sidebar);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-accent: var(--accent);
+  --color-accent-muted: var(--accent-muted);
+  --font-sans: var(--font-ui);
+  --font-heading: var(--font-syne);
+}
+
+body {
+  background: var(--canvas);
+  color: var(--fg);
+  font-family: var(--font-ui), system-ui, sans-serif;
+}
+
+/** Matches `bg-gradient-to-b from-emerald-950/35 via-black/80 to-[#0c0d0f]` on /launch (header + page). */
+body.hypapad-launch-gradient {
+  background-color: var(--canvas);
+  background-image: linear-gradient(
+    180deg,
+    rgb(6 78 59 / 0.35) 0%,
+    rgb(0 0 0 / 0.8) 55%,
+    #0c0d0f 100%
+  );
+  background-attachment: fixed;
+}
+
+.font-heading {
+  font-family: var(--font-syne), system-ui, sans-serif;
+}
+
+.swap-button__icon {
+  transform: rotate(0deg);
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.swap-button:hover .swap-button__icon,
+.swap-button:focus-visible .swap-button__icon {
+  transform: rotate(180deg);
+}
+
+@keyframes menu-slideout-link-in {
+  from {
+    opacity: 0;
+    transform: translateY(-18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-slideout-open .menu-slideout-link {
+  animation: menu-slideout-link-in 0.48s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+@keyframes menu-slideout-icon-in {
+  from {
+    opacity: 0;
+    transform: scale(0.82) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.menu-slideout-open .menu-slideout-icon {
+  animation: menu-slideout-icon-in 0.42s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}

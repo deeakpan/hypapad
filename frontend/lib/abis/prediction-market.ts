@@ -1,0 +1,133 @@
+import type { Abi } from "viem";
+
+export const predictionMarketAbi = [
+  {
+    inputs: [{ internalType: "address", name: "t", type: "address" }],
+    name: "getTokenMarkets",
+    outputs: [{ internalType: "uint256[]", name: "", type: "uint256[]" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "id", type: "uint256" }],
+    name: "getMarket",
+    outputs: [
+      {
+        components: [
+          { internalType: "address",   name: "token",             type: "address" },
+          { internalType: "address",   name: "curve",             type: "address" },
+          { internalType: "address",   name: "pool",              type: "address" },
+          { internalType: "uint8",     name: "marketType",        type: "uint8" },
+          { internalType: "uint8",     name: "status",            type: "uint8" },
+          { internalType: "uint256",   name: "deadline",          type: "uint256" },
+          { internalType: "uint256",   name: "ethTarget",         type: "uint256" },
+          { internalType: "uint256",   name: "multiplierX10",     type: "uint256" },
+          { internalType: "uint256",   name: "strikePrice",       type: "uint256" },
+          { internalType: "uint256",   name: "graduationMcap",    type: "uint256" },
+          { internalType: "uint256",   name: "graduationPrice",   type: "uint256" },
+          { internalType: "uint256",   name: "minLiquidity",      type: "uint256" },
+          { internalType: "uint256",   name: "cumulativeAtStart", type: "uint256" },
+          { internalType: "uint256",   name: "timestampAtStart",  type: "uint256" },
+          { internalType: "uint8",     name: "winningBucket",     type: "uint8" },
+          { internalType: "string",    name: "description",       type: "string" },
+          { internalType: "bool",      name: "outcome",           type: "bool" },
+          { internalType: "uint256",   name: "resolutionTime",    type: "uint256" },
+        ],
+        internalType: "struct PredictionMarket.Market",
+        name: "",
+        type: "tuple",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "yesPool",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    name: "noPool",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "id",   type: "uint256" },
+      { internalType: "address", name: "u",    type: "address" },
+    ],
+    name: "getUserStakes",
+    outputs: [
+      { internalType: "uint256", name: "y", type: "uint256" },
+      { internalType: "uint256", name: "n", type: "uint256" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "marketId", type: "uint256" },
+      { internalType: "address", name: "user",     type: "address" },
+    ],
+    name: "pendingWinnings",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "marketId", type: "uint256" },
+      { internalType: "bool",    name: "side",     type: "bool" },
+    ],
+    name: "stake",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
+    name: "claim",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
+    name: "claimRange",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "marketId", type: "uint256" }],
+    name: "refund",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "marketId", type: "uint256" },
+      { internalType: "address", name: "user", type: "address" },
+    ],
+    name: "claimed",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "marketId", type: "uint256" },
+      { internalType: "uint8", name: "bucket", type: "uint8" },
+      { internalType: "address", name: "user", type: "address" },
+    ],
+    name: "rangeStakes",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const satisfies Abi;

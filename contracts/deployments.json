@@ -1,0 +1,17 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "deployedAt": "2026-04-16T17:02:27.459Z",
+  "deployer": "0x68ac96Ce64D62386b1A5E2DFf8f0F01fEEd46E09",
+  "contracts": {
+    "WETH9": "0x5Cb6f7D5fbD12dB44FA9097C0ccf71aa9a4C8d24",
+    "UniswapV2Factory": "0x94be83B5eAf6b7577ea94A24Eb1273A23aFA5011",
+    "UniswapV2Router02": "0xa2EC6FB72fE387C68c95C09CC4208d1FA04DAF6B",
+    "TokenFactory": "0x4eC873D8B435Ee57e74852528F5A8524F26765dA",
+    "PredictionMarket": "0x15e05f617b24bf0A4f2A168F11C4C5cce3C75c46"
+  },
+  "graduationTargetEth": "0.0024",
+  "virtualEthInitEth": "0.00107",
+  "launchFeeWei": "300000000000000",
+  "launchFeeEth": "0.0003"
+}

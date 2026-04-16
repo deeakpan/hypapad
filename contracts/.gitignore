@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# Hardhat / build
+cache/
+artifacts/
+typechain-types/
+
+# Coverage / gas reports (if you enable them)
+coverage/
+coverage.json
+gas-report.txt
+
+# Logs & OS noise
+*.log
+.DS_Store
+Thumbs.db
