@@ -1,4 +1,4 @@
-import { writeFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { parseEther } from "ethers";
 import hre, { network } from "hardhat";
@@ -143,6 +143,18 @@ async function main() {
     const outPath = path.join(process.cwd(), "deployments.json");
     await writeFile(outPath, `${JSON.stringify(deploymentRecord, null, 2)}\n`, "utf8");
     console.log("Wrote", outPath);
+
+    // Mirror to frontend/deployments.json — same pattern as deploy-router.js
+    const frontendDeployPath = path.join(process.cwd(), "..", "frontend", "deployments.json");
+    let frontendRecord;
+    try {
+      frontendRecord = JSON.parse(await readFile(frontendDeployPath, "utf8"));
+      Object.assign(frontendRecord, deploymentRecord);
+    } catch {
+      frontendRecord = deploymentRecord;
+    }
+    await writeFile(frontendDeployPath, `${JSON.stringify(frontendRecord, null, 2)}\n`, "utf8");
+    console.log("Wrote", frontendDeployPath);
 
     console.log("\nDeployment complete on", networkName);
     console.log("-".repeat(50));
