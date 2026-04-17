@@ -22,7 +22,7 @@ export default function SwapPage() {
     <main className="flex min-h-0 flex-1 flex-col items-center bg-transparent px-4 py-12 sm:py-16">
       <div className="w-full max-w-[480px]">
         <h1 className="mb-6 font-heading text-2xl font-bold tracking-tight text-fg sm:text-3xl">
-          Swap
+          Hypaswap
         </h1>
         <SwapPanel />
       </div>
