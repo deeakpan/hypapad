@@ -5,12 +5,27 @@ export const runtime = "nodejs";
 /**
  * Server-side IPFS proxy.
  * Races all gateways simultaneously — first successful response wins.
- * IPFS CIDs are content-addressed and immutable, so we cache aggressively.
- * Failed paths are negatively cached in-process to avoid re-racing for known-bad CIDs.
+ *
+ * Caching strategy (two layers):
+ *  1. Positive in-process cache — stores the raw buffer for every successful
+ *     fetch so repeat requests never hit gateways again. `next: { revalidate }`
+ *     on fetch() is silently ignored when a signal is present, so we implement
+ *     caching ourselves.
+ *  2. Negative in-process cache — recently-failed paths skip the 10 s race.
+ *
+ * Both caches are process-scoped (survive across requests, reset on restart).
+ * The browser/CDN layer is handled via Cache-Control headers on responses.
  */
 
+// ── positive cache ────────────────────────────────────────────────────────────
+type CacheEntry = { buf: ArrayBuffer; ct: string };
+const responseCache = new Map<string, CacheEntry>();
+const MAX_CACHE_ENTRIES = 300; // ~60 MB at 200 KB average per entry
+
+// ── negative cache ────────────────────────────────────────────────────────────
 const NEGATIVE_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
 const failedPaths = new Map<string, number>(); // path → timestamp of failure
+
 const GATEWAYS = [
   "https://gateway.lighthouse.storage/ipfs/",
   "https://cf-ipfs.com/ipfs/",
@@ -53,8 +68,6 @@ async function tryGateway(base: string, path: string): Promise<Response> {
     redirect: "follow",
     headers: { Accept: "*/*" },
     signal: AbortSignal.timeout(GATEWAY_TIMEOUT_MS),
-    // Server-side Next.js fetch cache — CIDs never change
-    next: { revalidate: 604800 },
   });
   if (!r.ok) throw new Error(`HTTP ${r.status}`);
   return r;
@@ -64,6 +77,10 @@ const NEGATIVE_CACHE_HEADERS = {
   "Cache-Control": "public, max-age=60, s-maxage=60",
 };
 
+const POSITIVE_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=31536000, immutable",
+};
+
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const path = pathFromParams(sp.get("path"), sp.get("uri"));
@@ -71,7 +88,16 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing or invalid path / uri" }, { status: 400 });
   }
 
-  // In-process negative cache: skip the full gateway race for recently-failed CIDs
+  // 1. Positive cache hit — return immediately without touching any gateway
+  const hit = responseCache.get(path);
+  if (hit) {
+    return new NextResponse(hit.buf, {
+      status: 200,
+      headers: { "Content-Type": hit.ct, ...POSITIVE_CACHE_HEADERS },
+    });
+  }
+
+  // 2. Negative cache — skip the race for recently-failed paths
   const failedAt = failedPaths.get(path);
   if (failedAt !== undefined && Date.now() - failedAt < NEGATIVE_CACHE_TTL_MS) {
     return NextResponse.json(
@@ -80,9 +106,9 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  // 3. Race all gateways — first successful one wins
   let res: Response;
   try {
-    // Race all gateways — first successful one wins
     res = await Promise.any(GATEWAYS.map(base => tryGateway(base, path)));
   } catch {
     failedPaths.set(path, Date.now());
@@ -103,12 +129,15 @@ export async function GET(req: NextRequest) {
 
   const ct = res.headers.get("content-type")?.split(";")[0]?.trim() ?? "application/octet-stream";
 
+  // Store in positive cache — evict oldest entry if at capacity
+  if (responseCache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = responseCache.keys().next().value;
+    if (oldest) responseCache.delete(oldest);
+  }
+  responseCache.set(path, { buf, ct });
+
   return new NextResponse(buf, {
     status: 200,
-    headers: {
-      "Content-Type": ct,
-      // IPFS content is immutable — browsers and CDNs can cache forever
-      "Cache-Control": "public, max-age=31536000, immutable",
-    },
+    headers: { "Content-Type": ct, ...POSITIVE_CACHE_HEADERS },
   });
 }
