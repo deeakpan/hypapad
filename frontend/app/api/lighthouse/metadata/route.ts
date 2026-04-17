@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { lighthouseUploadFormData } from "../../../../lib/lighthouse-upload";
-import { verifyCidAccessible } from "../../../../lib/ipfs-verify";
+import { warmUpCid } from "../../../../lib/ipfs-verify";
 
 export const runtime = "nodejs";
 
@@ -69,17 +69,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  const ok = await verifyCidAccessible(result.cid);
-  if (!ok) {
-    return NextResponse.json(
-      {
-        error:
-          "Metadata was uploaded but isn't serving from the IPFS gateway yet. " +
-          "Please wait a few seconds and try again.",
-      },
-      { status: 502 },
-    );
-  }
+  // Warm up gateways in the background — same reasoning as the image route.
+  warmUpCid(result.cid);
 
   return NextResponse.json({ ...result, metadata });
 }

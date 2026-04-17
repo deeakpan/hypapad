@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { lighthouseUploadFormData } from "../../../../lib/lighthouse-upload";
-import { verifyCidAccessible } from "../../../../lib/ipfs-verify";
+import { warmUpCid } from "../../../../lib/ipfs-verify";
 
 export const runtime = "nodejs";
 
@@ -68,18 +68,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  // Verify the content is actually accessible before telling the client it's ready
-  const ok = await verifyCidAccessible(result.cid);
-  if (!ok) {
-    return NextResponse.json(
-      {
-        error:
-          "Image was uploaded but isn't serving from the IPFS gateway yet. " +
-          "Please wait a few seconds and try again.",
-      },
-      { status: 502 },
-    );
-  }
+  // Kick off gateway warm-up in the background — Lighthouse takes 20-40s to
+  // start serving freshly uploaded content. These requests run while the user
+  // signs the wallet transaction so gateways are ready by the time the tx confirms.
+  warmUpCid(result.cid);
 
   return NextResponse.json(result);
 }
