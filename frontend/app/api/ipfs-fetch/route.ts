@@ -6,7 +6,11 @@ export const runtime = "nodejs";
  * Server-side IPFS proxy.
  * Races all gateways simultaneously — first successful response wins.
  * IPFS CIDs are content-addressed and immutable, so we cache aggressively.
+ * Failed paths are negatively cached in-process to avoid re-racing for known-bad CIDs.
  */
+
+const NEGATIVE_CACHE_TTL_MS = 2 * 60 * 1000; // 2 minutes
+const failedPaths = new Map<string, number>(); // path → timestamp of failure
 const GATEWAYS = [
   "https://gateway.lighthouse.storage/ipfs/",
   "https://cf-ipfs.com/ipfs/",
@@ -56,6 +60,10 @@ async function tryGateway(base: string, path: string): Promise<Response> {
   return r;
 }
 
+const NEGATIVE_CACHE_HEADERS = {
+  "Cache-Control": "public, max-age=60, s-maxage=60",
+};
+
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
   const path = pathFromParams(sp.get("path"), sp.get("uri"));
@@ -63,12 +71,25 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Missing or invalid path / uri" }, { status: 400 });
   }
 
+  // In-process negative cache: skip the full gateway race for recently-failed CIDs
+  const failedAt = failedPaths.get(path);
+  if (failedAt !== undefined && Date.now() - failedAt < NEGATIVE_CACHE_TTL_MS) {
+    return NextResponse.json(
+      { error: "All IPFS gateways failed" },
+      { status: 502, headers: NEGATIVE_CACHE_HEADERS },
+    );
+  }
+
   let res: Response;
   try {
     // Race all gateways — first successful one wins
     res = await Promise.any(GATEWAYS.map(base => tryGateway(base, path)));
   } catch {
-    return NextResponse.json({ error: "All IPFS gateways failed" }, { status: 502 });
+    failedPaths.set(path, Date.now());
+    return NextResponse.json(
+      { error: "All IPFS gateways failed" },
+      { status: 502, headers: NEGATIVE_CACHE_HEADERS },
+    );
   }
 
   const len = res.headers.get("content-length");

@@ -46,11 +46,6 @@ export const metadata: Metadata = {
     images: ["/hypapadlogo.png"],
   },
   icons: {
-    icon: [
-      { url: "/hypapadlogo.png", type: "image/png", sizes: "32x32" },
-      { url: "/hypapadlogo.png", type: "image/png", sizes: "any" },
-    ],
-    shortcut: "/hypapadlogo.png",
     apple: [{ url: "/hypapadlogo.png", sizes: "180x180", type: "image/png" }],
   },
 };

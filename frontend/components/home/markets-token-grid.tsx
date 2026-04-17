@@ -215,6 +215,7 @@ function TokenCard({
     <article className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-surface-elevated/90 shadow-sm backdrop-blur-sm transition-[border-color,box-shadow,transform] duration-200 group-hover:border-accent/45 group-hover:shadow-[0_14px_40px_rgba(0,0,0,0.35)]">
       <div className="relative aspect-[2/1] w-full shrink-0 border-b border-border bg-canvas">
         <TokenMedia
+          key={imageCandidates[0] ?? ""}
           imageCandidates={imageCandidates}
           symbol={symbol}
           isLoading={metaLoading}
@@ -629,7 +630,14 @@ export function MarketsTokenGrid() {
     poll: true,
     pollingInterval: 4_000,
     onBlockNumber: () => {
-      void queryClient.invalidateQueries();
+      // Only invalidate on-chain contract reads — NOT metadata/price queries which are
+      // IPFS or external HTTP and should be governed by their own staleTime/refetchInterval.
+      void queryClient.invalidateQueries({
+        predicate: (query) => {
+          const k = query.queryKey[0];
+          return k !== "hypa-token-meta" && k !== "eth-usd";
+        },
+      });
     },
   });
 

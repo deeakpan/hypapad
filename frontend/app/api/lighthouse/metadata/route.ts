@@ -1,6 +1,23 @@
 import { NextResponse } from "next/server";
 import { lighthouseUploadFormData } from "../../../../lib/lighthouse-upload";
 
+async function verifyCid(cid: string): Promise<boolean> {
+  const url = `https://gateway.lighthouse.storage/ipfs/${cid}`;
+  for (let i = 0; i < 2; i++) {
+    if (i > 0) await new Promise((r) => setTimeout(r, 3000));
+    try {
+      const r = await fetch(url, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(8000),
+      });
+      if (r.ok) return true;
+    } catch {
+      /* try again */
+    }
+  }
+  return false;
+}
+
 export const runtime = "nodejs";
 
 /** ERC-20 style metadata for HypaToken / wallets (contract expects JSON with image). */
@@ -60,11 +77,25 @@ export async function POST(req: Request) {
   const out = new FormData();
   out.append("file", blob, "metadata.json");
 
+  let result: { cid: string; gatewayUrl: string };
   try {
-    const result = await lighthouseUploadFormData(apiKey, out);
-    return NextResponse.json({ ...result, metadata });
+    result = await lighthouseUploadFormData(apiKey, out);
   } catch (e) {
     const message = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: message }, { status: 502 });
   }
+
+  const ok = await verifyCid(result.cid);
+  if (!ok) {
+    return NextResponse.json(
+      {
+        error:
+          "Metadata was uploaded but isn't serving from the IPFS gateway yet. " +
+          "Please wait a few seconds and try again.",
+      },
+      { status: 502 },
+    );
+  }
+
+  return NextResponse.json({ ...result, metadata });
 }
