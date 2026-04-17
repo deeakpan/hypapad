@@ -1,22 +1,6 @@
 import { NextResponse } from "next/server";
 import { lighthouseUploadFormData } from "../../../../lib/lighthouse-upload";
-
-async function verifyCid(cid: string): Promise<boolean> {
-  const url = `https://gateway.lighthouse.storage/ipfs/${cid}`;
-  for (let i = 0; i < 2; i++) {
-    if (i > 0) await new Promise((r) => setTimeout(r, 3000));
-    try {
-      const r = await fetch(url, {
-        method: "HEAD",
-        signal: AbortSignal.timeout(8000),
-      });
-      if (r.ok) return true;
-    } catch {
-      /* try again */
-    }
-  }
-  return false;
-}
+import { verifyCidAccessible } from "../../../../lib/ipfs-verify";
 
 export const runtime = "nodejs";
 
@@ -85,7 +69,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message }, { status: 502 });
   }
 
-  const ok = await verifyCid(result.cid);
+  const ok = await verifyCidAccessible(result.cid);
   if (!ok) {
     return NextResponse.json(
       {

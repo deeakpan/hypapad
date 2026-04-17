@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { lighthouseUploadFormData } from "../../../../lib/lighthouse-upload";
+import { verifyCidAccessible } from "../../../../lib/ipfs-verify";
 
 export const runtime = "nodejs";
 
@@ -12,24 +13,6 @@ const ALLOWED_MIME = new Set([
   "image/svg+xml",
   "image/avif",
 ]);
-
-/** Best-effort: try to fetch the CID from Lighthouse with two attempts. */
-async function verifyCid(cid: string): Promise<boolean> {
-  const url = `https://gateway.lighthouse.storage/ipfs/${cid}`;
-  for (let i = 0; i < 2; i++) {
-    if (i > 0) await new Promise((r) => setTimeout(r, 3000));
-    try {
-      const r = await fetch(url, {
-        method: "HEAD",
-        signal: AbortSignal.timeout(8000),
-      });
-      if (r.ok) return true;
-    } catch {
-      /* try again */
-    }
-  }
-  return false;
-}
 
 export async function POST(req: Request) {
   const apiKey = process.env.LIGHTHOUSE_API_KEY;
@@ -86,7 +69,7 @@ export async function POST(req: Request) {
   }
 
   // Verify the content is actually accessible before telling the client it's ready
-  const ok = await verifyCid(result.cid);
+  const ok = await verifyCidAccessible(result.cid);
   if (!ok) {
     return NextResponse.json(
       {
