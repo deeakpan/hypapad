@@ -1258,12 +1258,19 @@ export function SwapPanel({
                     : "—"}
                 </span>
               </div>
-              {viaWeth ? (
-                <div className="flex justify-between">
-                  <span>Route</span>
-                  <span className="font-mono text-fg">{tokenSymbol(tokenIn)} → WETH → {tokenSymbol(tokenOut)}</span>
-                </div>
-              ) : null}
+              <div className="flex justify-between">
+                <span>Route</span>
+                <span className="font-mono text-fg">
+                  {isTokenToToken ? (
+                    <>
+                      {viaWeth ? "Via WETH" : "Direct"} · {tokenSymbol(tokenIn)} →{" "}
+                      {viaWeth ? `WETH → ${tokenSymbol(tokenOut)}` : tokenSymbol(tokenOut)}
+                    </>
+                  ) : (
+                    `${tokenSymbol(tokenIn)} → ${tokenSymbol(tokenOut)}`
+                  )}
+                </span>
+              </div>
               {priceImpact !== null ? (
                 <div className="flex justify-between">
                   <span>Price impact</span>
